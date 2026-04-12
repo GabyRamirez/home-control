@@ -4,51 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>DEBUG Home Control</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Home Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-color: #0b0e14; --card-bg: rgba(255,255,255,0.05); --text-primary: #fff; --accent-green: #10b981; --accent-red: #ef4444; }
-        body { background: var(--bg-color); color: var(--text-primary); font-family: 'Outfit', sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 500px; }
-        .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 15px; position: relative; z-index: 10; }
-        .card:active { transform: scale(0.98); background: rgba(255,255,255,0.1); }
-        .status { font-weight: 600; font-size: 0.8rem; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; margin-left: auto; background: gray; }
-        .active .dot { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
-        .blocked .dot { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
-        #debug-btn { background: #333; color: #fff; padding: 10px; width: 100%; margin-bottom: 20px; border-radius: 10px; text-align: center; border: 1px solid #555; cursor: pointer; }
+        :root { 
+            --bg-color: #0b0e14; 
+            --card-bg: rgba(255, 255, 255, 0.05); 
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff; 
+            --text-secondary: #94a3b8;
+            --accent-green: #10b981; 
+            --accent-red: #ef4444; 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-primary); font-family: 'Outfit', sans-serif; min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 30px; }
+        h1 { font-size: 2.2rem; font-weight: 600; background: linear-gradient(135deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; padding-top: 20px; }
+        #status-bar { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; }
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); backdrop-filter: blur(12px); border-radius: 24px; padding: 22px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .card:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.08); }
+        .icon { font-size: 2.2rem; width: 60px; height: 60px; background: rgba(0, 0, 0, 0.2); border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+        .info h2 { font-size: 1.1rem; font-weight: 400; }
+        .status { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+        .dot { width: 12px; height: 12px; border-radius: 50%; margin-left: auto; background: rgba(255,255,255,0.1); transition: all 0.4s ease; }
+        
+        /* States */
+        .active { border-color: rgba(16, 185, 129, 0.3); }
+        .active .status { color: var(--accent-green); }
+        .active .dot { background: var(--accent-green); box-shadow: 0 0 12px var(--accent-green); }
+        
+        .blocked { border-color: rgba(239, 68, 68, 0.3); }
+        .blocked .status { color: var(--accent-red); }
+        .blocked .dot { background: var(--accent-red); box-shadow: 0 0 12px var(--accent-red); }
+        .blocked .icon { opacity: 0.6; }
+
+        .loading { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="debug-btn" onclick="alert('EL CLIC FUNCIONA!')">BOTÓ DE PROVA (HA DE SORTIR ALERTA)</div>
-        
-        <div class="card" id="card-nintendo" onclick="doToggle('nintendo')">
-            <div style="font-size: 2rem">🎮</div>
-            <div>
-                <div>Nintendo Switch</div>
-                <div class="status" id="stat-nintendo">Petició...</div>
-            </div>
-            <div class="dot"></div>
-        </div>
+        <header>
+            <h1>Home Control</h1>
+            <p id="status-bar">Sincronitzant...</p>
+        </header>
 
-        <div class="card" id="card-tv" onclick="doToggle('tv')">
-            <div style="font-size: 2rem">📺</div>
-            <div>
-                <div>Samsung TV</div>
-                <div class="status" id="stat-tv">Petició...</div>
+        <main class="grid">
+            <div class="card" id="card-nintendo" onclick="doToggle('nintendo')">
+                <div class="icon">🎮</div>
+                <div class="info">
+                    <h2>Nintendo Switch</h2>
+                    <span class="status" id="stat-nintendo">---</span>
+                </div>
+                <div class="dot"></div>
             </div>
-            <div class="dot"></div>
-        </div>
-        
-        <p id="bar" style="font-size: 0.8rem; opacity: 0.5; text-align: center">Iniciant...</p>
+
+            <div class="card" id="card-tv" onclick="doToggle('tv')">
+                <div class="icon">📺</div>
+                <div class="info">
+                    <h2>Samsung TV</h2>
+                    <span class="status" id="stat-tv">---</span>
+                </div>
+                <div class="dot"></div>
+            </div>
+        </main>
+
+        <footer style="margin-top:auto; text-align:center; font-size:0.7rem; opacity:0.4; padding:20px;">
+            <p id="last-upd">Actualitzat: --:--</p>
+        </footer>
     </div>
 
     <script src="config.js"></script>
     <script>
-        // Capturar ERRORS globals
-        window.onerror = function(msg) { alert("ERROR JS: " + msg); };
-
         const dev = {
             nintendo: { entity: 'switch.parental_control_nintendo', id: 'stat-nintendo', card: 'card-nintendo' },
             tv: { entity: 'switch.parental_control_tv', id: 'stat-tv', card: 'card-tv' }
@@ -67,17 +94,19 @@
                         document.getElementById(dev[k].id).innerText = 'BLOQUEJAT';
                     } else {
                         card.className = 'card active';
-                        document.getElementById(dev[k].id).innerText = 'LLIURE';
+                        document.getElementById(dev[k].id).innerText = 'ACCÉS LLIURE';
                     }
-                } catch(e) { document.getElementById('bar').innerText = 'Error: ' + e; }
+                    document.getElementById('status-bar').innerText = 'Sincronitzat amb la llar';
+                } catch(e) { 
+                    document.getElementById('status-bar').innerText = 'Error de connexió';
+                }
             }
-            document.getElementById('bar').innerText = 'Sincronitzat: ' + new Date().toLocaleTimeString();
+            document.getElementById('last-upd').innerText = 'Actualitzat: ' + new Date().toLocaleTimeString();
         }
 
         async function doToggle(k) {
-            alert("Intentant toggle per: " + k); // ALERTA CRÍTICA
             const card = document.getElementById(dev[k].card);
-            card.style.opacity = "0.5";
+            card.classList.add('loading');
             try {
                 const r = await fetch(`${CONFIG.HA_URL}/api/services/switch/toggle`, {
                     method: 'POST',
@@ -85,13 +114,13 @@
                     body: JSON.stringify({ entity_id: dev[k].entity })
                 });
                 if (r.ok) { 
-                    setTimeout(update, 1000); 
+                    setTimeout(update, 800); 
                 } else {
                     const txt = await r.text();
-                    alert("Error HA: " + txt);
+                    alert("Error Home Assistant: " + txt);
                 }
-            } catch(e) { alert("Error connexió: " + e); }
-            card.style.opacity = "1";
+            } catch(e) { alert("Error de xarxa: " + e); }
+            setTimeout(() => card.classList.remove('loading'), 1000);
         }
 
         setInterval(update, 5000);
