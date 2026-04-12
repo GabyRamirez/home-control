@@ -24,6 +24,7 @@
         .blocked .st { color: var(--red); }
         .blocked .dot { background: var(--red); box-shadow: 0 0 15px var(--red); }
         .loading { opacity: 0.5; pointer-events: none; }
+        #debug { margin-top: 30px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; font-size: 0.7rem; color: #475569; border: 1px dashed #334155; }
     </style>
 </head>
 <body>
@@ -48,8 +49,14 @@
             </div>
             <div class="dot"></div>
         </div>
+
+        <div id="debug">
+            <strong>Debug Info:</strong><br>
+            Nintendo: <span id="dbg-nintendo">?</span> (switch.parental_control_nintendo_3)<br>
+            TV: <span id="dbg-tv">?</span> (switch.parental_control_tv_2)
+        </div>
         
-        <footer style="margin-top: 40px; text-align: center; font-size: 0.75rem; color: #475569;">
+        <footer style="margin-top: 20px; text-align: center; font-size: 0.75rem; color: #475569;">
             <p id="time">Actualitzat: --:--</p>
         </footer>
     </div>
@@ -57,8 +64,8 @@
     <script src="config.js"></script>
     <script>
         const dev = {
-            nintendo: { entity: 'switch.parental_control_nintendo_3', sid: 's-nintendo', cid: 'c-nintendo' },
-            tv: { entity: 'switch.parental_control_tv_2', sid: 's-tv', cid: 'c-tv' }
+            nintendo: { entity: 'switch.parental_control_nintendo_3', sid: 's-nintendo', cid: 'c-nintendo', dbg: 'dbg-nintendo' },
+            tv: { entity: 'switch.parental_control_tv_2', sid: 's-tv', cid: 'c-tv', dbg: 'dbg-tv' }
         };
 
         async function update() {
@@ -70,6 +77,10 @@
                     const d = await r.json();
                     const card = document.getElementById(dev[k].cid);
                     const status = document.getElementById(dev[k].sid);
+                    const debug = document.getElementById(dev[k].dbg);
+                    
+                    debug.innerText = d.state || 'Error';
+                    
                     if (d.state === 'on') {
                         card.className = 'card blocked';
                         status.innerText = 'BLOQUEJAT';
