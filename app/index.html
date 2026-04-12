@@ -4,47 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Home Control</title>
+    <title>DEBUG Home Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root { --bg-color: #0b0e14; --card-bg: rgba(255,255,255,0.05); --text-primary: #fff; --accent-green: #10b981; --accent-red: #ef4444; }
+        body { background: var(--bg-color); color: var(--text-primary); font-family: 'Outfit', sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; }
+        .card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 15px; cursor: pointer; display: flex; align-items: center; gap: 15px; position: relative; z-index: 10; }
+        .card:active { transform: scale(0.98); background: rgba(255,255,255,0.1); }
+        .status { font-weight: 600; font-size: 0.8rem; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; margin-left: auto; background: gray; }
+        .active .dot { background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+        .blocked .dot { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        #debug-btn { background: #333; color: #fff; padding: 10px; width: 100%; margin-bottom: 20px; border-radius: 10px; text-align: center; border: 1px solid #555; cursor: pointer; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Home Control</h1>
-            <p id="status-bar">Connectant amb la llar...</p>
-        </header>
-
-        <main class="grid">
-            <!-- Nintendo Card -->
-            <div class="card" id="card-nintendo" >
-                <div class="icon">🎮</div>
-                <div class="info">
-                    <h2>Nintendo Switch</h2>
-                    <span class="status" id="status-nintendo">Inactiu</span>
-                </div>
-                <div class="toggle-indicator"></div>
+        <div id="debug-btn" onclick="alert('EL CLIC FUNCIONA!')">BOTÓ DE PROVA (HA DE SORTIR ALERTA)</div>
+        
+        <div class="card" id="card-nintendo" onclick="doToggle('nintendo')">
+            <div style="font-size: 2rem">🎮</div>
+            <div>
+                <div>Nintendo Switch</div>
+                <div class="status" id="stat-nintendo">Petició...</div>
             </div>
+            <div class="dot"></div>
+        </div>
 
-            <!-- Samsung TV Card -->
-            <div class="card" id="card-tv" >
-                <div class="icon">📺</div>
-                <div class="info">
-                    <h2>Samsung TV</h2>
-                    <span class="status" id="status-tv">Inactiu</span>
-                </div>
-                <div class="toggle-indicator"></div>
+        <div class="card" id="card-tv" onclick="doToggle('tv')">
+            <div style="font-size: 2rem">📺</div>
+            <div>
+                <div>Samsung TV</div>
+                <div class="status" id="stat-tv">Petició...</div>
             </div>
-        </main>
-
-        <footer>
-            <div id="last-update">Actualitzat: --:--</div>
-        </footer>
+            <div class="dot"></div>
+        </div>
+        
+        <p id="bar" style="font-size: 0.8rem; opacity: 0.5; text-align: center">Iniciant...</p>
     </div>
 
-    <!-- Configuration (Expected in config.js) -->
     <script src="config.js"></script>
-    <script src="script.js"></script>
+    <script>
+        // Capturar ERRORS globals
+        window.onerror = function(msg) { alert("ERROR JS: " + msg); };
+
+        const dev = {
+            nintendo: { entity: 'switch.parental_control_nintendo', id: 'stat-nintendo', card: 'card-nintendo' },
+            tv: { entity: 'switch.parental_control_tv', id: 'stat-tv', card: 'card-tv' }
+        };
+
+        async function update() {
+            for (const k in dev) {
+                try {
+                    const r = await fetch(`${CONFIG.HA_URL}/api/states/${dev[k].entity}`, {
+                        headers: { 'Authorization': `Bearer ${CONFIG.HA_TOKEN}` }
+                    });
+                    const d = await r.json();
+                    const card = document.getElementById(dev[k].card);
+                    if (d.state === 'on') {
+                        card.className = 'card blocked';
+                        document.getElementById(dev[k].id).innerText = 'BLOQUEJAT';
+                    } else {
+                        card.className = 'card active';
+                        document.getElementById(dev[k].id).innerText = 'LLIURE';
+                    }
+                } catch(e) { document.getElementById('bar').innerText = 'Error: ' + e; }
+            }
+            document.getElementById('bar').innerText = 'Sincronitzat: ' + new Date().toLocaleTimeString();
+        }
+
+        async function doToggle(k) {
+            alert("Intentant toggle per: " + k); // ALERTA CRÍTICA
+            const card = document.getElementById(dev[k].card);
+            card.style.opacity = "0.5";
+            try {
+                const r = await fetch(`${CONFIG.HA_URL}/api/services/switch/toggle`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CONFIG.HA_TOKEN}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entity_id: dev[k].entity })
+                });
+                if (r.ok) { 
+                    setTimeout(update, 1000); 
+                } else {
+                    const txt = await r.text();
+                    alert("Error HA: " + txt);
+                }
+            } catch(e) { alert("Error connexió: " + e); }
+            card.style.opacity = "1";
+        }
+
+        setInterval(update, 5000);
+        update();
+    </script>
 </body>
 </html>
