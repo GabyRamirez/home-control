@@ -1,0 +1,4 @@
+const CONFIG = {
+    HA_URL: 'https://ha.ramirez.cat',
+    HA_TOKEN: 'EL_TEU_TOKEN_AQUI'
+};

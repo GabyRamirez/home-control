@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Home Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Home Control</h1>
+            <p id="status-bar">Connectant amb la llar...</p>
+        </header>
+
+        <main class="grid">
+            <!-- Nintendo Card -->
+            <div class="card" id="card-nintendo" onclick="toggleDevice('nintendo')">
+                <div class="icon">🎮</div>
+                <div class="info">
+                    <h2>Nintendo Switch</h2>
+                    <span class="status" id="status-nintendo">Inactiu</span>
+                </div>
+                <div class="toggle-indicator"></div>
+            </div>
+
+            <!-- Samsung TV Card -->
+            <div class="card" id="card-tv" onclick="toggleDevice('tv')">
+                <div class="icon">📺</div>
+                <div class="info">
+                    <h2>Samsung TV</h2>
+                    <span class="status" id="status-tv">Inactiu</span>
+                </div>
+                <div class="toggle-indicator"></div>
+            </div>
+        </main>
+
+        <footer>
+            <div id="last-update">Actualitzat: --:--</div>
+        </footer>
+    </div>
+
+    <!-- Configuration (Expected in config.js) -->
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
