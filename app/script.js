@@ -11,10 +11,14 @@ const devices = {
     }
 };
 
-// Initial update
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('--- App Home Control engegada ---');
+    
+    // Assignar els clics via Javascript (més robust)
+    document.getElementById('card-nintendo').addEventListener('click', () => toggleDevice('nintendo'));
+    document.getElementById('card-tv').addEventListener('click', () => toggleDevice('tv'));
+
     updateAllStatuses();
-    // Poll every 5 seconds
     setInterval(updateAllStatuses, 5000);
 });
 
@@ -34,14 +38,10 @@ async function fetchStatus(key) {
                 'Content-Type': 'application/json'
             }
         });
-        
-        if (!response.ok) throw new Error('Error de xarxa');
-        
         const data = await response.json();
         updateUI(key, data.state);
         document.getElementById('status-bar').innerText = 'Sincronitzat amb la llar';
-    } catch (error) {
-        console.error('Error fetching status:', error);
+    } catch (e) {
         document.getElementById('status-bar').innerText = 'Error de connexió';
     }
 }
@@ -51,7 +51,6 @@ function updateUI(key, state) {
     const card = document.getElementById(device.cardId);
     const statusText = document.getElementById(device.statusId);
     
-    // Switch state in HA: 'on' means blocked (rule enabled), 'off' means free
     if (state === 'on') {
         card.classList.add('blocked');
         card.classList.remove('active');
@@ -64,15 +63,13 @@ function updateUI(key, state) {
 }
 
 async function toggleDevice(key) {
-    console.log('--- Intentant toggle per:', key);
+    // Alerta immediata per confirmar que el clic arriba al codi
+    console.log('CLIC DETECTAT PER:', key);
+    
     const device = devices[key];
     const card = document.getElementById(device.cardId);
     
-    // Evitar múltiples clics mentre carrega
-    if (card.classList.contains('loading')) {
-        console.log('Bloquejat: Card està en estat loading');
-        return;
-    }
+    if (card.classList.contains('loading')) return;
     
     card.classList.add('loading');
     document.getElementById('status-bar').innerText = 'Enviant ordre...';
@@ -89,16 +86,13 @@ async function toggleDevice(key) {
         
         if (response.ok) {
             document.getElementById('status-bar').innerText = 'Ordre executada!';
-            // Esperem una mica a que HA actualitzi l'estat real
             setTimeout(() => fetchStatus(key), 800);
         } else {
-            const errorBody = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorBody}`);
+            const err = await response.text();
+            alert(`Error de Home Assistant: ${err}`);
         }
     } catch (error) {
-        console.error('Error toggling device:', error);
-        document.getElementById('status-bar').innerText = 'Error en l\'ordre';
-        alert('No s\'ha pogut canviar l\'estat. Revisa els permisos CORS a Home Assistant.');
+        alert(`Error de connexió: ${error.message}`);
     } finally {
         setTimeout(() => card.classList.remove('loading'), 1000);
     }
@@ -106,7 +100,5 @@ async function toggleDevice(key) {
 
 function updateTime() {
     const now = new Date();
-    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
-                    now.getMinutes().toString().padStart(2, '0');
-    document.getElementById('last-update').innerText = `Actualitzat: ${timeStr}`;
+    document.getElementById('last-update').innerText = 'Actualitzat: ' + now.toLocaleTimeString();
 }
