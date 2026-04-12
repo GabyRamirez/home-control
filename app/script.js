@@ -66,7 +66,12 @@ function updateUI(key, state) {
 async function toggleDevice(key) {
     const device = devices[key];
     const card = document.getElementById(device.cardId);
+    
+    // Evitar múltiples clics mentre carrega
+    if (card.classList.contains('loading')) return;
+    
     card.classList.add('loading');
+    document.getElementById('status-bar').innerText = 'Enviant ordre...';
     
     try {
         const response = await fetch(`${CONFIG.HA_URL}/api/services/switch/toggle`, {
@@ -79,13 +84,19 @@ async function toggleDevice(key) {
         });
         
         if (response.ok) {
-            // Immediate feedback poll
-            setTimeout(() => fetchStatus(key), 500);
+            document.getElementById('status-bar').innerText = 'Ordre executada!';
+            // Esperem una mica a que HA actualitzi l'estat real
+            setTimeout(() => fetchStatus(key), 800);
+        } else {
+            const errorBody = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorBody}`);
         }
     } catch (error) {
         console.error('Error toggling device:', error);
+        document.getElementById('status-bar').innerText = 'Error en l\'ordre';
+        alert('No s\'ha pogut canviar l\'estat. Revisa els permisos CORS a Home Assistant.');
     } finally {
-        setTimeout(() => card.classList.remove('loading'), 500);
+        setTimeout(() => card.classList.remove('loading'), 1000);
     }
 }
 
