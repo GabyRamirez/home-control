@@ -64,11 +64,15 @@ function updateUI(key, state) {
 }
 
 async function toggleDevice(key) {
+    console.log('--- Intentant toggle per:', key);
     const device = devices[key];
     const card = document.getElementById(device.cardId);
     
     // Evitar múltiples clics mentre carrega
-    if (card.classList.contains('loading')) return;
+    if (card.classList.contains('loading')) {
+        console.log('Bloquejat: Card està en estat loading');
+        return;
+    }
     
     card.classList.add('loading');
     document.getElementById('status-bar').innerText = 'Enviant ordre...';
