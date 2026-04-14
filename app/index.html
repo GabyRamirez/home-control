@@ -6,101 +6,80 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Home Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #0b1018; --card: rgba(255,255,255,0.04); --primary: #fff; --green: #10b981; --red: #ef4444; }
-        body { background: var(--bg); color: var(--primary); font-family: 'Outfit', sans-serif; display: flex; justify-content: center; padding: 25px; -webkit-font-smoothing: antialiased; }
-        .container { width: 100%; max-width: 480px; }
-        h1 { font-size: 2.2rem; font-weight: 600; margin-bottom: 5px; background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        #bar { color: #64748b; font-size: 0.9rem; margin-bottom: 35px; }
-        .card { background: var(--card); border: 1px solid rgba(255,255,255,0.08); border-radius: 28px; padding: 25px; margin-bottom: 18px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; backdrop-filter: blur(10px); }
-        .card:active { transform: scale(0.96); background: rgba(255,255,255,0.08); }
-        .icon { font-size: 2.4rem; width: 64px; height: 64px; background: rgba(0,0,0,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; }
-        .st { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; margin-left: auto; background: rgba(255,255,255,0.1); transition: all 0.4s ease; }
-        .active { border-color: rgba(16, 185, 129, 0.25); }
-        .active .st { color: var(--green); }
-        .active .dot { background: var(--green); box-shadow: 0 0 15px var(--green); }
-        .blocked { border-color: rgba(239, 68, 68, 0.25); }
-        .blocked .st { color: var(--red); }
-        .blocked .dot { background: var(--red); box-shadow: 0 0 15px var(--red); }
-        .loading { opacity: 0.5; pointer-events: none; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Home Control</h1>
-        <p id="bar">Connectant...</p>
+        <header>
+            <h1>Home Control</h1>
+            <p id="status-bar">Connectant amb la llar...</p>
+        </header>
         
-        <div class="card" id="c-nintendo" onclick="doToggle('nintendo')">
-            <div class="icon">🎮</div>
-            <div>
-                <div style="font-size: 1.1rem; margin-bottom: 2px;">Nintendo Switch</div>
-                <div class="st" id="s-nintendo">Llegint...</div>
+        <div class="grid">
+            <!-- Parental Controls -->
+            <div class="card" id="card-nintendo">
+                <div class="icon">🎮</div>
+                <div class="info">
+                    <h2>Nintendo Switch</h2>
+                    <div class="status" id="status-nintendo">Llegint...</div>
+                </div>
+                <div class="toggle-indicator"></div>
             </div>
-            <div class="dot"></div>
-        </div>
 
-        <div class="card" id="c-tv" onclick="doToggle('tv')">
-            <div class="icon">📺</div>
-            <div>
-                <div style="font-size: 1.1rem; margin-bottom: 2px;">Samsung TV</div>
-                <div class="st" id="s-tv">Llegint...</div>
+            <div class="card" id="card-tv">
+                <div class="icon">📺</div>
+                <div class="info">
+                    <h2>Samsung TV</h2>
+                    <div class="status" id="status-tv">Llegint...</div>
+                </div>
+                <div class="toggle-indicator"></div>
             </div>
-            <div class="dot"></div>
+
+            <!-- Dispositius Llar -->
+            <div class="card" id="card-termo">
+                <div class="icon">🌡️</div>
+                <div class="info">
+                    <h2>Termo</h2>
+                    <div class="status" id="status-termo">Llegint...</div>
+                </div>
+                <div class="toggle-indicator"></div>
+            </div>
+
+            <div class="card" id="card-piscina">
+                <div class="icon">🏊</div>
+                <div class="info">
+                    <h2>Depuradora</h2>
+                    <div class="status" id="status-piscina">Llegint...</div>
+                </div>
+                <div class="toggle-indicator"></div>
+            </div>
+
+            <div class="card" id="card-ac-comedor">
+                <div class="icon">❄️</div>
+                <div class="info">
+                    <h2>Aire Comedor</h2>
+                    <div class="status" id="status-ac-comedor">Llegint...</div>
+                </div>
+                <div class="toggle-indicator"></div>
+            </div>
+
+            <div class="card" id="card-ventilacio">
+                <div class="icon">🌬️</div>
+                <div class="info">
+                    <h2>Ventilació</h2>
+                    <div class="status" id="status-ventilacio">Llegint...</div>
+                </div>
+                <div class="toggle-indicator"></div>
+            </div>
         </div>
         
-        <footer style="margin-top: 40px; text-align: center; font-size: 0.75rem; color: #475569;">
-            <p id="time">Actualitzat: --:--</p>
+        <footer>
+            <p id="last-update">Actualitzat: --:--</p>
         </footer>
     </div>
 
+    <!-- Scripts -->
     <script src="config.js"></script>
-    <script>
-        const dev = {
-            nintendo: { entity: 'switch.parental_control_nintendo_3', sid: 's-nintendo', cid: 'c-nintendo' },
-            tv: { entity: 'switch.parental_control_tv_2', sid: 's-tv', cid: 'c-tv' }
-        };
-
-        async function update() {
-            for (const k in dev) {
-                try {
-                    const r = await fetch(`${CONFIG.HA_URL}/api/states/${dev[k].entity}`, {
-                        headers: { 'Authorization': `Bearer ${CONFIG.HA_TOKEN}` }
-                    });
-                    const d = await r.json();
-                    const card = document.getElementById(dev[k].cid);
-                    const status = document.getElementById(dev[k].sid);
-                    
-                    if (d.state === 'on') {
-                        card.className = 'card blocked';
-                        status.innerText = 'BLOQUEJAT';
-                    } else {
-                        card.className = 'card active';
-                        status.innerText = 'ACCÉS LLIURE';
-                    }
-                    document.getElementById('bar').innerText = 'Sincronitzat amb la llar';
-                } catch(e) { document.getElementById('bar').innerText = 'Error de comunicació'; }
-            }
-            document.getElementById('time').innerText = 'Actualitzat: ' + new Date().toLocaleTimeString();
-        }
-
-        async function doToggle(k) {
-            const card = document.getElementById(dev[k].cid);
-            card.classList.add('loading');
-            try {
-                const r = await fetch(`${CONFIG.HA_URL}/api/services/switch/toggle`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${CONFIG.HA_TOKEN}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ entity_id: dev[k].entity })
-                });
-                if (r.ok) { setTimeout(update, 1000); }
-                else { alert("Home Assistant ha rebutjat l'ordre."); }
-            } catch(e) { alert("Error de xarxa en l'ordre."); }
-            setTimeout(() => card.classList.remove('loading'), 1200);
-        }
-
-        setInterval(update, 5000);
-        update();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
