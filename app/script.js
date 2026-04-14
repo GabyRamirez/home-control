@@ -23,10 +23,10 @@ const devices = {
         cardId: 'card-piscina',
         type: 'normal'
     },
-    ventilacio: { 
+    ac_buhardilla: { 
         entity: 'switch.t57_ventilacion_ventilacion', 
-        statusId: 'status-ventilacio', 
-        cardId: 'card-ventilacio',
+        statusId: 'status-ac-buhardilla', 
+        cardId: 'card-ac-buhardilla',
         type: 'normal'
     },
     ac_comedor: { 
