@@ -37,6 +37,23 @@ const devices = {
     }
 };
 
+const mapSensors = {
+    'm-buh-t': 'sensor.buhardilla_temperatura',
+    'm-buh-h': 'sensor.buhardilla_humitat',
+    'm-buh-ext-t': 'sensor.blink_terraza_buhardilla_temperatura',
+    'm-pri-t': 'sensor.habitacion_raquel_temperatura',
+    'm-pri-h': 'sensor.habitacion_raquel_humitat',
+    'm-leo-t': 'sensor.habitacion_leo_temperatura',
+    'm-leo-h': 'sensor.habitacion_leo_humitat',
+    'm-bal-t': 'sensor.blink_balcon_temperatura',
+    'm-cui-t': 'sensor.cocina_temperatura',
+    'm-cui-h': 'sensor.cocina_humitat',
+    'm-men-t': 'sensor.aa_comedor_analog_temperature',
+    'm-pba-ext-t': 'sensor.blink_terraza_temperatura',
+    'm-sot-t': 'sensor.sotano_temperatura',
+    'm-sot-h': 'sensor.sotano_humitat'
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('--- App Home Control engegada ---');
     
@@ -48,15 +65,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    updateAllStatuses();
-    setInterval(updateAllStatuses, 5000);
+    updateAll();
+    setInterval(updateAll, 10000); // Actualització cada 10 segons (més relaxat pels mapes)
 });
 
-async function updateAllStatuses() {
+async function updateAll() {
+    // Actualitzar estats de botons
     for (const key in devices) {
         await fetchStatus(key);
     }
+    // Actualitzar mapa de la casa
+    await updateMap();
     updateTime();
+}
+
+async function updateMap() {
+    for (const [id, entity] of Object.entries(mapSensors)) {
+        try {
+            const response = await fetch(`${CONFIG.HA_URL}/api/states/${entity}`, {
+                headers: { 'Authorization': `Bearer ${CONFIG.HA_TOKEN}` }
+            });
+            const data = await response.json();
+            const element = document.getElementById(id);
+            if (element && data.state !== 'unknown' && data.state !== 'unavailable') {
+                element.innerText = parseFloat(data.state).toFixed(1);
+            }
+        } catch (e) { console.error('Error carregant sensor:', entity); }
+    }
 }
 
 async function fetchStatus(key) {
@@ -70,7 +105,7 @@ async function fetchStatus(key) {
         });
         const data = await response.json();
         updateUI(key, data.state);
-        document.getElementById('status-bar').innerText = 'Sincronitzat amb la llar';
+        document.getElementById('status-bar').innerText = 'Sincronitzat amb llar';
     } catch (e) {
         document.getElementById('status-bar').innerText = 'Error de connexió';
     }
