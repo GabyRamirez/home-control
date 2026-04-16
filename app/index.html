@@ -72,6 +72,31 @@
                 <div class="toggle-indicator"></div>
             </div>
         </div>
+        
+        <!-- Tendència de Preus -->
+        <section class="price-section">
+            <div class="card price-card">
+                <div class="price-header">
+                    <h2>Preu de l'Electricitat (PVPC)</h2>
+                    <div id="current-price-badge" class="badge">-- €/kWh</div>
+                </div>
+                <div id="price-chart"></div>
+                <div class="price-summary">
+                    <div class="metric">
+                        <span class="label">Mínim</span>
+                        <span id="min-price" class="value">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Mitjana</span>
+                        <span id="avg-price" class="value">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Màxim</span>
+                        <span id="max-price" class="value">--</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- Mapa de la Casa -->
         <div class="house-map">
@@ -169,6 +194,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>

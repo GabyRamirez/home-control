@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateAll();
-    setInterval(updateAll, 10000); // Actualització cada 10 segons (més relaxat pels mapes)
+    setInterval(updateAll, 10000); // Actualització cada 10 segons
 });
 
 async function updateAll() {
@@ -76,6 +76,8 @@ async function updateAll() {
     }
     // Actualitzar mapa de la casa
     await updateMap();
+    // Actualitzar preus llum
+    await updateElectricity();
     updateTime();
 }
 
@@ -119,7 +121,6 @@ function updateUI(key, state) {
     if (!card || !statusText) return;
 
     if (device.type === 'parental') {
-        // Lògica per a control parental (on = bloquejat/vermell, off = lliure/verd)
         if (state === 'on') {
             card.className = 'card blocked';
             statusText.innerText = 'BLOQUEJAT';
@@ -128,7 +129,6 @@ function updateUI(key, state) {
             statusText.innerText = 'ACCÉS LLIURE';
         }
     } else {
-        // Lògica normal (on = encès/verd, off = apagat/vermell)
         if (state === 'on') {
             card.className = 'card active';
             statusText.innerText = 'ENCÉS';
@@ -140,8 +140,6 @@ function updateUI(key, state) {
 }
 
 async function toggleDevice(key) {
-    console.log('CLIC DETECTAT PER:', key);
-    
     const device = devices[key];
     const card = document.getElementById(device.cardId);
     
@@ -162,7 +160,6 @@ async function toggleDevice(key) {
         
         if (response.ok) {
             document.getElementById('status-bar').innerText = 'Ordre executada!';
-            // Actualització ràpida de l'estat visual abans del fetch
             toggleUIOptimistic(key);
             setTimeout(() => fetchStatus(key), 1200);
         } else {
@@ -196,5 +193,125 @@ function updateTime() {
     const timeElement = document.getElementById('last-update');
     if (timeElement) {
         timeElement.innerText = 'Actualitzat: ' + timeStr;
+    }
+}
+
+// --- Electricity Price Logic ---
+let priceChart = null;
+let lastPriceFetch = 0;
+window.lastPriceData = null;
+
+async function updateElectricity() {
+    const now = Date.now();
+    // Cache per 30 minuts
+    if (window.lastPriceData && (now - lastPriceFetch < 30 * 60 * 1000)) {
+        updateCurrentPriceBadge();
+        return;
+    }
+
+    try {
+        const response = await fetch('https://api.preciodelaluz.org/v1/prices/all?zone=PCB');
+        const data = await response.json();
+        
+        lastPriceFetch = now;
+        window.lastPriceData = data;
+        processPriceData(data);
+    } catch (e) {
+        console.error('Error fetching electricity prices:', e);
+    }
+}
+
+function processPriceData(data) {
+    const hours = Object.values(data).map(item => parseInt(item.hour.split('-')[0]));
+    const prices = Object.values(data).map(item => item.price / 1000); // Convert to €/kWh
+    
+    // Summary Metrics
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    
+    document.getElementById('min-price').innerText = min.toFixed(4) + ' €';
+    document.getElementById('max-price').innerText = max.toFixed(4) + ' €';
+    document.getElementById('avg-price').innerText = avg.toFixed(4) + ' €';
+
+    renderChart(hours, prices);
+    updateCurrentPriceBadge();
+}
+
+function updateCurrentPriceBadge() {
+    if (!window.lastPriceData) return;
+
+    const currentHour = new Date().getHours();
+    const hourKey = `${currentHour.toString().padStart(2, '0')}-${(currentHour + 1).toString().padStart(2, '0')}`;
+    
+    const badge = document.getElementById('current-price-badge');
+    if (badge && window.lastPriceData[hourKey]) {
+        const price = window.lastPriceData[hourKey].price / 1000;
+        badge.innerText = `${price.toFixed(3)} €/kWh`;
+        
+        // Color coding for badge
+        if (price < 0.12) badge.style.borderColor = 'var(--accent-green)';
+        else if (price > 0.20) badge.style.borderColor = 'var(--accent-red)';
+        else badge.style.borderColor = '#fbd38d';
+    }
+}
+
+function renderChart(hours, prices) {
+    const options = {
+        series: [{
+            name: 'Preu',
+            data: prices
+        }],
+        chart: {
+            type: 'bar',
+            height: 200,
+            toolbar: { show: false },
+            animations: { enabled: true },
+            background: 'transparent',
+            fontFamily: "'Outfit', sans-serif"
+        },
+        theme: { mode: 'dark' },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                columnWidth: '80%',
+                distributed: true
+            }
+        },
+        dataLabels: { enabled: false },
+        colors: prices.map(p => {
+            if (p < 0.12) return '#10b981'; // Green
+            if (p > 0.20) return '#ef4444'; // Red
+            return '#fbd38d'; // Yellow/Orange
+        }),
+        xaxis: {
+            categories: hours.map(h => h.toString().padStart(2, '0')),
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            labels: {
+                style: { colors: '#94a3b8', fontSize: '10px' }
+            }
+        },
+        yaxis: {
+            show: false
+        },
+        grid: {
+            show: false,
+            padding: { left: 0, right: 0 }
+        },
+        legend: { show: false },
+        tooltip: {
+            theme: 'dark',
+            y: {
+                formatter: (val) => val.toFixed(4) + ' €/kWh'
+            }
+        }
+    };
+
+    if (priceChart) {
+        priceChart.updateOptions(options);
+    } else {
+        priceChart = new ApexCharts(document.querySelector("#price-chart"), options);
+        priceChart.render();
     }
 }
